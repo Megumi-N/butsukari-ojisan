@@ -317,7 +317,7 @@ function App() {
       rankMessage,
     });
 
-    const url = 'https://butsukari-ojisan.netlify.app/\n';
+    const url = 'https://butsukari-ojisan.netlify.app/';
     const hashtags = ['ぶつかりおじさんゲーム', 'WebGame'];
 
     const intent = `https://twitter.com/intent/tweet?text=${encodeURIComponent(
@@ -326,13 +326,8 @@ function App() {
       hashtags.join(',')
     )}`;
 
-    if (navigator.share) {
-      navigator.share({ text: baseText, url }).catch(() => {
-        window.open(intent, '_blank', 'noopener,noreferrer');
-      });
-    } else {
-      window.open(intent, '_blank', 'noopener,noreferrer');
-    }
+    // 直接Xを開く
+    window.open(intent, '_blank', 'noopener,noreferrer');
   }, [getRank, survivalTime, successCount, t]);
 
   // スマホ以外の場合の画面
