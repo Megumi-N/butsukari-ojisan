@@ -77,6 +77,8 @@ export const translations = {
         f: 'おじさんを見極めよう！',
       },
     },
+    base: ({ survivalTime, successCount, rankLabel, rankMessage }) =>
+      `ぶつかりおじさんゲームやってみた。\n生存${survivalTime}秒 / 成功${successCount}回 / ランク${rankLabel}\n${rankMessage}\n`,
   },
   en: {
     title: 'Butsukari Otoko Game',
@@ -88,7 +90,8 @@ export const translations = {
     },
     start: {
       title: 'How to Play',
-      description: 'Choose the right action against the approaching Butsukari Otoko!',
+      description:
+        'Choose the right action against the approaching Butsukari Otoko!',
       rules: [
         'Each type of Butsukari Otoko has only one effective response',
         'Wrong response or no response leads to game over',
@@ -156,5 +159,7 @@ export const translations = {
         f: "Don't give up! Keep challenging!",
       },
     },
+    base: ({ survivalTime, successCount, rankLabel, rankMessage }) =>
+      `Played the Butsukari Ojisan game\nSurvived ${survivalTime}s / ${successCount} successes / Rank ${rankLabel}\n${rankMessage}\n`,
   },
 };

@@ -1,6 +1,13 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import './App.css';
 import { translations } from './translations';
+import StartScreen from './components/StartScreen';
+import GameField from './components/GameField';
+import GameOver from './components/GameOver';
+import ActionButtons from './components/ActionButtons';
+import GameInfo from './components/GameInfo';
+import MobileOnlyMessage from './components/MobileOnlyMessage';
+import LanguageToggle from './components/LanguageToggle';
 
 function App() {
   // 言語設定
@@ -297,30 +304,51 @@ function App() {
     return () => clearInterval(interval);
   }, [gameState]);
 
+  // xへの投稿
+  const shareToX = useCallback(() => {
+    const rankKey = getRank(survivalTime);
+    const rankLabel = t.gameOver?.ranks?.[rankKey] ?? rankKey.toUpperCase();
+    const rankMessage = t.gameOver?.messages?.[rankKey] || '';
+
+    const baseText = t.base({
+      survivalTime,
+      successCount,
+      rankLabel,
+      rankMessage,
+    });
+
+    const url = 'https://butsukari-ojisan.netlify.app/\n';
+    const hashtags = ['ぶつかりおじさんゲーム', 'WebGame'];
+
+    const intent = `https://twitter.com/intent/tweet?text=${encodeURIComponent(
+      baseText
+    )}&url=${encodeURIComponent(url)}&hashtags=${encodeURIComponent(
+      hashtags.join(',')
+    )}`;
+
+    if (navigator.share) {
+      navigator.share({ text: baseText, url }).catch(() => {
+        window.open(intent, '_blank', 'noopener,noreferrer');
+      });
+    } else {
+      window.open(intent, '_blank', 'noopener,noreferrer');
+    }
+  }, [getRank, survivalTime, successCount, t]);
+
   // スマホ以外の場合の画面
   if (!isMobile) {
     return (
       <div className="App">
-        <button
-          className="language-toggle-floating"
-          onClick={() => setLanguage(language === 'ja' ? 'en' : 'ja')}
-        >
-          {language === 'ja' ? 'EN' : '日本語'}
-        </button>
+        <LanguageToggle
+          language={language}
+          onToggle={() => setLanguage(language === 'ja' ? 'en' : 'ja')}
+        />
         <div className="game-container">
           <div className="game-title">
             <h1 className="title-main">ぶつかりおじさん</h1>
             <p className="title-sub">Butsukari Otoko Game</p>
           </div>
-          <div className="mobile-only-message">
-            <h2>📱 {t.mobileOnly.title}</h2>
-            <p>{t.mobileOnly.description1}</p>
-            <p>{t.mobileOnly.description2}</p>
-            <div className="qr-placeholder">
-              <p>{t.mobileOnly.accessPrompt}</p>
-              <p className="url-display">{window.location.href}</p>
-            </div>
-          </div>
+          <MobileOnlyMessage t={t} />
         </div>
       </div>
     );
@@ -328,155 +356,53 @@ function App() {
 
   return (
     <div className="App">
-      <button
-        className="language-toggle-floating"
-        onClick={() => setLanguage(language === 'ja' ? 'en' : 'ja')}
-      >
-        {language === 'ja' ? 'EN' : '日本語'}
-      </button>
+      <LanguageToggle
+        language={language}
+        onToggle={() => setLanguage(language === 'ja' ? 'en' : 'ja')}
+      />
       <div className="game-container">
         <div className="game-title">
           <h1 className="title-main">ぶつかりおじさん</h1>
           <p className="title-sub">Butsukari Otoko Game</p>
         </div>
         {gameState === 'ready' && (
-          <div className="start-screen">
-            <h2>{t.start.title}</h2>
-            <p>{t.start.description}</p>
-            <ul>
-              {t.start.rules.map((rule, index) => (
-                <li key={index}>{rule}</li>
-              ))}
-            </ul>
-            <button onClick={startGame} className="start-button">
-              {t.start.button}
-            </button>
-          </div>
+          <StartScreen t={t} onStart={startGame} />
         )}
 
         {gameState === 'playing' && (
           <>
-            <div className="game-info">
-              <div className="survival-time">
-                {t.game.survivalTime}: {survivalTime}
-                {t.game.seconds}
-              </div>
-              <div className="success-count">
-                {t.game.success}: {successCount}
-                {t.game.times}
-              </div>
-              <div className="count">
-                {t.game.encounters}: {ojisanCount}
-                {t.game.people}
-              </div>
-            </div>
-
-            <div className="game-field">
-              {/* モブキャラ */}
-              {mobCharacters.map((mob) => (
-                <div
-                  key={mob.id}
-                  className="mob-character"
-                  style={{
-                    left: `${mob.position}%`,
-                    top: `${mob.verticalPosition}%`,
-                  }}
-                >
-                  {mob.emoji}
-                </div>
-              ))}
-
-              {/* おじさん */}
-              <div
-                className={`ojisan ${
-                  playerAction ? 'action-' + playerAction : ''
-                }`}
-                style={{ top: `${ojisanPosition}%` }}
-              >
-                {currentOjisan.emoji}
-              </div>
-
-              {/* プレイヤー */}
-              <div className="player">
-                <div className="player-head">👤</div>
-                <div className="player-body"></div>
-              </div>
-
-              {feedback && (
-                <div className="feedback">
-                  <div className="feedback-title">{feedback.title}</div>
-                  <div className="feedback-description">
-                    {feedback.description}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <div className="action-buttons">
-              <button
-                onClick={() => handleAction('dodge')}
-                disabled={playerAction}
-                className="action-btn dodge-btn"
-              >
-                {t.actions.dodge}
-              </button>
-              <button
-                onClick={() => handleAction('stop')}
-                disabled={playerAction}
-                className="action-btn stop-btn"
-              >
-                {t.actions.stop}
-              </button>
-              <button
-                onClick={() => handleAction('stare')}
-                disabled={playerAction}
-                className="action-btn stare-btn"
-              >
-                {t.actions.stare}
-              </button>
-              <button
-                onClick={() => handleAction('counter')}
-                disabled={playerAction}
-                className="action-btn counter-btn"
-              >
-                {t.actions.counter}
-              </button>
-            </div>
+            <GameInfo
+              t={t}
+              survivalTime={survivalTime}
+              successCount={successCount}
+              ojisanCount={ojisanCount}
+            />
+            <GameField
+              mobCharacters={mobCharacters}
+              ojisanPosition={ojisanPosition}
+              currentOjisan={currentOjisan}
+              playerAction={playerAction}
+              feedback={feedback}
+            />
+            <ActionButtons
+              t={t}
+              playerAction={playerAction}
+              onAction={handleAction}
+            />
           </>
         )}
 
         {gameState === 'gameOver' && (
-          <div className="game-over">
-            <h2>{t.gameOver.title}</h2>
-            <p className="final-score">
-              {t.gameOver.survivalTime}: {survivalTime}
-              {t.game.seconds}
-            </p>
-            <div className="rank-display">
-              {(() => {
-                const rank = getRank(survivalTime);
-                return (
-                  <>
-                    <div className={`rank ${rank}-rank`}>
-                      {t.gameOver.ranks[rank]}
-                    </div>
-                    <p className="rank-message">{t.gameOver.messages[rank]}</p>
-                  </>
-                );
-              })()}
-            </div>
-            <p>
-              {t.gameOver.successCount}: {successCount}
-              {t.game.times}
-            </p>
-            <p>
-              {t.gameOver.encounterCount}: {ojisanCount}
-              {t.game.people}
-            </p>
-            <button onClick={startGame} className="start-button">
-              {t.gameOver.playAgain}
-            </button>
-          </div>
+          <GameOver
+            t={t}
+            survivalTime={survivalTime}
+            successCount={successCount}
+            ojisanCount={ojisanCount}
+            language={language}
+            onRestart={startGame}
+            onShare={shareToX}
+            getRank={getRank}
+          />
         )}
       </div>
     </div>
